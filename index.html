@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta
     name="viewport"
-    content="width=device-width, initial-scale=1.0"
+    content="width=device-width, initial-scale=1.0, viewport-fit=cover"
   />
 
   <title>Copilot Agent</title>
@@ -14,22 +14,341 @@
   </script>
 
   <style>
+    :root {
+      color-scheme: light;
+      font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+      background: #f8f7f4;
+    }
+
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+    }
+
     html,
     body {
       width: 100%;
+      min-width: 320px;
       height: 100%;
       margin: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      overflow: hidden;
+      color: #252b38;
+      background:
+        linear-gradient(145deg, #fffdf9 0%, #f8fafc 48%, #fbf8fc 100%);
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    .page-shell {
+      position: relative;
+      isolation: isolate;
+      display: grid;
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding: clamp(16px, 4vw, 48px);
+      overflow: hidden;
+    }
+
+    .ambient-orbs {
+      position: fixed;
+      z-index: -1;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+
+    .orb {
+      position: absolute;
+      border-radius: 999px;
+      filter: blur(28px);
+      opacity: 0.5;
+      transform: translateZ(0);
+      animation: drift 18s ease-in-out infinite alternate;
+    }
+
+    .orb--blue {
+      top: -14%;
+      left: -8%;
+      width: min(46vw, 620px);
+      aspect-ratio: 1;
+      background: rgba(191, 226, 255, 0.6);
+    }
+
+    .orb--lavender {
+      top: 15%;
+      right: -12%;
+      width: min(42vw, 560px);
+      aspect-ratio: 1;
+      background: rgba(222, 208, 255, 0.52);
+      animation-delay: -6s;
+    }
+
+    .orb--pink {
+      bottom: -20%;
+      left: 28%;
+      width: min(48vw, 660px);
+      aspect-ratio: 1;
+      background: rgba(255, 215, 229, 0.42);
+      animation-delay: -12s;
+    }
+
+    .chat-card {
+      align-self: center;
+      justify-self: center;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      width: min(100%, 1000px);
+      height: min(820px, calc(100vh - clamp(32px, 8vw, 96px)));
+      height: min(820px, calc(100dvh - clamp(32px, 8vw, 96px)));
+      min-height: min(620px, calc(100vh - 32px));
+      min-height: min(620px, calc(100dvh - 32px));
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.58);
+      border: 1px solid rgba(255, 255, 255, 0.88);
+      border-radius: 30px;
+      box-shadow:
+        0 30px 80px rgba(64, 72, 96, 0.13),
+        0 8px 28px rgba(83, 95, 130, 0.07),
+        inset 0 1px 0 rgba(255, 255, 255, 0.92);
+      -webkit-backdrop-filter: blur(28px) saturate(135%);
+      backdrop-filter: blur(28px) saturate(135%);
+    }
+
+    .chat-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 24px 28px 22px;
+      background: rgba(255, 255, 255, 0.3);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.62);
+    }
+
+    .chat-heading {
+      min-width: 0;
+    }
+
+    .chat-heading h1 {
+      margin: 0;
+      color: #202632;
+      font-size: clamp(1.15rem, 2vw, 1.4rem);
+      font-weight: 700;
+      letter-spacing: -0.025em;
+    }
+
+    .chat-heading p {
+      margin: 6px 0 0;
+      color: #626b7a;
+      font-size: 0.92rem;
+      line-height: 1.5;
+    }
+
+    .online-status {
+      flex: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 34px;
+      padding: 7px 12px;
+      color: #39735a;
+      font-size: 0.82rem;
+      font-weight: 650;
+      background: rgba(240, 255, 247, 0.66);
+      border: 1px solid rgba(171, 224, 194, 0.62);
+      border-radius: 999px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #72c994;
+      box-shadow: 0 0 0 4px rgba(114, 201, 148, 0.14);
+    }
+
+    .chat-surface {
+      min-height: 0;
+      padding: 5px 8px 8px;
+      background: rgba(255, 255, 255, 0.13);
     }
 
     #webchat {
       width: 100%;
       height: 100%;
+      overflow: hidden;
+      border-radius: 0 0 23px 23px;
+    }
+
+    /* Web Chat의 안정적인 data-id만 사용해 입력 영역을 보완합니다. */
+    #webchat [data-id="webchat-sendbox-input"] {
+      min-height: 48px;
+      margin: 10px 4px 10px 10px;
+      padding-inline: 18px;
+      color: #293140;
+      background: rgba(255, 255, 255, 0.68);
+      border: 1px solid rgba(255, 255, 255, 0.94);
+      border-radius: 999px;
+      box-shadow:
+        0 8px 24px rgba(73, 85, 117, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.92);
+      transition:
+        background-color 160ms ease,
+        box-shadow 160ms ease,
+        transform 160ms ease;
+    }
+
+    #webchat [data-id="webchat-sendbox-input"]:focus {
+      outline: 3px solid rgba(103, 142, 234, 0.3);
+      outline-offset: 1px;
+      background: rgba(255, 255, 255, 0.88);
+      box-shadow: 0 10px 28px rgba(73, 85, 117, 0.11);
+    }
+
+    #webchat [data-id="webchat-sendbox-send-button"] {
+      align-self: center;
+      width: 44px;
+      min-width: 44px;
+      height: 44px;
+      margin-right: 8px;
+      color: #ffffff;
+      background: linear-gradient(135deg, #7aaaf7 0%, #9b8ee9 100%);
+      border-radius: 14px;
+      box-shadow: 0 8px 20px rgba(102, 125, 205, 0.24);
+      transition:
+        transform 160ms ease,
+        box-shadow 160ms ease,
+        filter 160ms ease;
+    }
+
+    #webchat [data-id="webchat-sendbox-send-button"]:hover {
+      transform: translateY(-2px);
+      filter: saturate(1.06);
+      box-shadow: 0 11px 24px rgba(102, 125, 205, 0.28);
+    }
+
+    #webchat [data-id="webchat-sendbox-send-button"]:focus-visible,
+    #webchat [data-id="webchat-sendbox-upload-button"]:focus-visible {
+      outline: 3px solid rgba(83, 111, 194, 0.4);
+      outline-offset: 2px;
+    }
+
+    @keyframes drift {
+      from {
+        transform: translate3d(-2%, -1%, 0) scale(0.98);
+      }
+
+      to {
+        transform: translate3d(3%, 2%, 0) scale(1.04);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .page-shell {
+        padding:
+          max(8px, env(safe-area-inset-top))
+          max(8px, env(safe-area-inset-right))
+          max(8px, env(safe-area-inset-bottom))
+          max(8px, env(safe-area-inset-left));
+      }
+
+      .chat-card {
+        align-self: stretch;
+        height: auto;
+        min-height: 0;
+        border-radius: 24px;
+      }
+
+      .chat-header {
+        gap: 14px;
+        padding: 18px 18px 16px;
+      }
+
+      .chat-heading p {
+        font-size: 0.84rem;
+      }
+
+      .online-status {
+        padding: 7px 10px;
+      }
+
+      .chat-surface {
+        padding: 3px 3px 5px;
+      }
+
+      #webchat {
+        border-radius: 0 0 19px 19px;
+      }
+    }
+
+    @media (max-width: 390px) {
+      .chat-header {
+        align-items: flex-start;
+      }
+
+      .chat-heading p {
+        max-width: 220px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
     }
   </style>
 </head>
 
 <body>
-  <div id="webchat"></div>
+  <main class="page-shell">
+    <div class="ambient-orbs" aria-hidden="true">
+      <span class="orb orb--blue"></span>
+      <span class="orb orb--lavender"></span>
+      <span class="orb orb--pink"></span>
+    </div>
+
+    <section class="chat-card" aria-labelledby="assistant-title">
+      <header class="chat-header">
+        <div class="chat-heading">
+          <h1 id="assistant-title">AI 도우미</h1>
+          <p>궁금한 내용을 편안하게 물어보세요.</p>
+        </div>
+
+        <div
+          class="online-status"
+          role="status"
+          aria-label="AI 도우미 온라인"
+        >
+          <span class="status-dot" aria-hidden="true"></span>
+          <span>온라인</span>
+        </div>
+      </header>
+
+      <div class="chat-surface">
+        <div
+          id="webchat"
+          role="region"
+          aria-label="AI 도우미 채팅"
+        ></div>
+      </div>
+    </section>
+  </main>
 
   <script>
     async function getDirectLineToken() {
@@ -60,9 +379,56 @@
           directLine,
           locale: 'ko-KR',
           styleOptions: {
-            accent: '#0078D4',
+            accent: '#667eea',
+            backgroundColor: 'transparent',
+            primaryFont: 'Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+
+            bubbleBackground: 'rgba(255, 255, 255, 0.72)',
+            bubbleBorderColor: 'rgba(255, 255, 255, 0.9)',
+            bubbleBorderRadius: 20,
+            bubbleBorderStyle: 'solid',
+            bubbleBorderWidth: 1,
+            bubbleFromUserBackground: 'linear-gradient(135deg, rgba(210, 230, 255, 0.96), rgba(226, 216, 255, 0.94))',
+            bubbleFromUserBorderColor: 'rgba(184, 199, 241, 0.68)',
+            bubbleFromUserBorderRadius: 20,
+            bubbleFromUserBorderStyle: 'solid',
+            bubbleFromUserBorderWidth: 1,
+            bubbleFromUserTextColor: '#27334a',
+            bubbleMaxWidth: 680,
+            bubbleMinHeight: 42,
+            bubbleTextColor: '#293140',
+            bubbleNubSize: 0,
+            bubbleFromUserNubSize: 0,
+
+            avatarSize: 34,
+            avatarBorderRadius: '50%',
+            botAvatarBackgroundColor: '#eef2ff',
             botAvatarInitials: 'AI',
-            userAvatarInitials: '나'
+            userAvatarBackgroundColor: '#e8e4ff',
+            userAvatarInitials: '나',
+
+            paddingRegular: 18,
+            paddingWide: 24,
+            messageActivityWordBreak: 'break-word',
+            timestampColor: '#6f7888',
+            groupTimestamp: true,
+
+            sendBoxBackground: 'rgba(255, 255, 255, 0.34)',
+            sendBoxBorderTop: '1px solid rgba(255, 255, 255, 0.58)',
+            sendBoxButtonColor: '#6578cf',
+            sendBoxButtonColorOnDisabled: '#a9afbd',
+            sendBoxButtonColorOnFocus: '#ffffff',
+            sendBoxButtonColorOnHover: '#ffffff',
+            sendBoxHeight: 68,
+            sendBoxMaxHeight: 160,
+            sendBoxPlaceholderColor: '#70798a',
+            sendBoxTextColor: '#293140',
+
+            suggestedActionBackgroundColor: 'rgba(255, 255, 255, 0.72)',
+            suggestedActionBorderColor: 'rgba(125, 145, 208, 0.42)',
+            suggestedActionBorderRadius: 18,
+            suggestedActionTextColor: '#40558f',
+            hideUploadButton: false
           }
         },
         document.getElementById('webchat')
