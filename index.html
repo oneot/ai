@@ -1,23 +1,538 @@
 <!DOCTYPE html>
 <html lang="ko">
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>AI Creative Agent</title>
-<script src="https://cdn.botframework.com/botframework-webchat/4.18.0/webchat.js"></script>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AI Creative Agent Team</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&display=swap">
+  <script src="https://cdn.botframework.com/botframework-webchat/4.18.0/webchat.js"></script>
+  <style>
+    :root { --bg:#F7F7FB; --ink:#14142B; --muted:#6B6B80; --line:rgba(20,20,43,.08); --brand:linear-gradient(120deg,#6E8BFF,#A77BFF 40%,#FF8AC8 70%,#FFB37A); --brand-strong:linear-gradient(120deg,#4F6BFF,#8B5CF6 40%,#EC4899 70%,#FF7A45); --spring:cubic-bezier(.2,1.3,.3,1); }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; background: var(--bg); }
+    body { margin: 0; color: var(--ink); font-family: "Pretendard Variable", -apple-system, BlinkMacSystemFont, system-ui, sans-serif; background: var(--bg); overflow-x: clip; word-break: keep-all; }
+    body::before { content:""; position: fixed; inset: 0; pointer-events: none; z-index: 50; opacity: .04; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.75'/%3E%3C/svg%3E"); }
+    a { color: inherit; text-decoration: none; }
+    button, textarea { font: inherit; }
+    .page { position: relative; overflow: hidden; }
+    .gradient-text { display: inline-block; background: var(--brand-strong); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .serif { font-family: "Instrument Serif", Georgia, serif; font-style: italic; font-weight: 400; letter-spacing: -.02em; }
+    .glass { background: rgba(255,255,255,.55); -webkit-backdrop-filter: blur(24px) saturate(160%); backdrop-filter: blur(24px) saturate(160%); border: 1px solid rgba(255,255,255,.7); box-shadow: 0 30px 80px -30px rgba(76,70,160,.25), inset 0 1px 1px rgba(255,255,255,.9); }
+    .mesh { background: radial-gradient(circle at 16% 18%, #8EA2FF 0 14%, transparent 32%), radial-gradient(circle at 78% 9%, #FFB3D9 0 13%, transparent 30%), radial-gradient(circle at 66% 62%, #FFD3A8 0 16%, transparent 34%), radial-gradient(circle at 25% 74%, #9BE3FF 0 15%, transparent 32%), radial-gradient(circle at 50% 32%, #C4A5FF 0 16%, transparent 36%), linear-gradient(135deg, #fff, #F5F0FF 40%, #FFF7F0); }
+    .nav { position: fixed; z-index: 30; top: 16px; left: 50%; transform: translateX(-50%); width: min(1080px, calc(100% - 24px)); min-width: 0; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 18px; padding: 10px 12px 10px 14px; border-radius: 999px; }
+    .brand { display: flex; align-items: center; gap: 10px; min-width: 0; font-weight: 800; letter-spacing: -.03em; white-space: nowrap; }
+    .brand-mark { flex: none; width: 26px; aspect-ratio: 1; border-radius: 50%; background: var(--brand); box-shadow: 0 8px 22px -8px rgba(139,92,246,.7); }
+    .brand-name { overflow: hidden; text-overflow: ellipsis; }
+    .nav-links { display: flex; justify-content: center; gap: 8px; }
+    .nav-link { padding: 9px 13px; border-radius: 999px; color: rgba(20,20,43,.68); font-size: 14px; font-weight: 650; white-space: nowrap; transition: .35s var(--spring); }
+    .nav-link:hover { color: var(--ink); background: rgba(255,255,255,.48); }
+    .pill-button { border: 0; cursor: pointer; border-radius: 999px; padding: 12px 18px; font-weight: 800; white-space: nowrap; color: #fff; background: var(--ink); box-shadow: 0 14px 28px -18px rgba(20,20,43,.7); transition: transform .35s var(--spring), box-shadow .35s var(--spring), opacity .35s; }
+    .pill-button:hover { transform: translateY(-2px); box-shadow: 0 20px 36px -20px rgba(20,20,43,.75); }
+    .ghost-button { border: 1px solid rgba(255,255,255,.72); color: var(--ink); background: rgba(255,255,255,.44); }
+    .hero { margin: 84px 12px 0; border-radius: 36px; position: relative; overflow: hidden; display: grid; align-items: start; padding: 28px clamp(16px, 5vw, 76px) 26px; }
+    .hero::before, .cta-panel::before { content:""; position: absolute; width: 46vw; min-width: 360px; aspect-ratio: 1; border-radius: 50%; left: -10%; top: -22%; background: radial-gradient(circle, rgba(255,255,255,.42), transparent 62%); animation: blob-drift 24s ease-in-out infinite alternate; translate: 0 var(--py, 0px); }
+    .hero::after, .cta-panel::after { content:""; position: absolute; width: 52vw; min-width: 390px; aspect-ratio: 1; border-radius: 50%; right: -16%; bottom: -28%; background: radial-gradient(circle, rgba(255,138,200,.22), transparent 64%); animation: blob-drift 28s ease-in-out infinite alternate-reverse; translate: 0 calc(var(--py, 0px) * -.6); }
+    .hero-inner { position: relative; z-index: 1; width: min(980px, 100%); margin: 0 auto; display: grid; justify-items: center; gap: 12px; text-align: center; }
+    .eyebrow { display: inline-flex; align-items: center; max-width: 100%; gap: 10px; padding: 9px 14px; border-radius: 999px; color: rgba(20,20,43,.76); font-size: 13px; font-weight: 760; white-space: nowrap; }
+    .status-dot { width: 8px; aspect-ratio: 1; border-radius: 50%; background: #B8BBCB; box-shadow: 0 0 0 4px rgba(184,187,203,.16); }
+    body.is-connected .status-dot { background: #26C281; box-shadow: 0 0 0 4px rgba(38,194,129,.14); }
+    .eyebrow-copy { overflow: hidden; text-overflow: ellipsis; }
+    .hero-title { margin: 0; max-width: 980px; font-size: clamp(40px, 6vw, 88px); line-height: 1.02; letter-spacing: -.06em; font-weight: 850; text-wrap: balance; }
+    .hero-subtitle { margin: 0; max-width: 700px; color: rgba(20,20,43,.72); font-size: clamp(16px, 2vw, 21px); line-height: 1.55; font-weight: 600; text-wrap: balance; }
+    .logo-strip { width: 100%; padding: 22px 12px 0; text-align: center; color: rgba(20,20,43,.34); font-size: 13px; font-weight: 750; letter-spacing: .02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .chat-card { width: min(860px, 100%); border-radius: 32px; padding: 12px; text-align: left; display: flex; flex-direction: column; }
+    .chat-card > * { flex: none; }
+    .window-bar { display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 12px; height: 38px; padding: 0 4px 8px; }
+    .traffic { display: flex; gap: 6px; }
+    .traffic-dot { width: 10px; aspect-ratio: 1; border-radius: 50%; background: rgba(20,20,43,.16); }
+    .window-title { min-width: 0; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .connection-text { color: var(--muted); font-size: 12px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; }
+    .new-chat { border: 0; cursor: pointer; border-radius: 999px; padding: 8px 11px; font-size: 12px; font-weight: 800; color: var(--ink); background: rgba(255,255,255,.42); white-space: nowrap; }
+    .chat-card > #webchat { height: 200px; min-height: 0; border-radius: 22px; overflow: auto; background: rgba(255,255,255,.18); }
+    body.is-started .chat-card { height: calc(100svh - 112px); }
+    body.is-started .chat-card > #webchat { flex: 1 1 0; height: auto; min-height: 0; }
+    .chat-foot { display: grid; gap: 10px; padding-top: 10px; }
+    .example-chips, .suggestions, .marquee-track { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    .example-chips::-webkit-scrollbar, .suggestions::-webkit-scrollbar, .marquee-track::-webkit-scrollbar { display: none; }
+    body.is-started .example-chips { display: none; }
+    .chip { flex: none; border: 1px solid rgba(255,255,255,.72); cursor: pointer; padding: 9px 12px; border-radius: 999px; color: rgba(20,20,43,.75); background: rgba(255,255,255,.42); font-size: 13px; font-weight: 750; white-space: nowrap; transition: transform .35s var(--spring), background .35s; }
+    .chip:hover { transform: translateY(-2px); background: rgba(255,255,255,.68); }
+    .suggestions:empty { display: none; }
+    .working { display: none; align-items: center; justify-content: space-between; gap: 10px; color: rgba(20,20,43,.64); font-size: 13px; font-weight: 750; }
+    body.is-working .working { display: flex; }
+    .working-left { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+    .spark-dots { display: inline-flex; gap: 4px; }
+    .spark-dot { width: 6px; aspect-ratio: 1; border-radius: 50%; background: #8B5CF6; animation: blink 1.2s ease-in-out infinite; }
+    .spark-dot:nth-child(2) { animation-delay: .12s; } .spark-dot:nth-child(3) { animation-delay: .24s; } .spark-dot:nth-child(4) { animation-delay: .36s; } .spark-dot:nth-child(5) { animation-delay: .48s; }
+    .working-note { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .composer { position: relative; min-height: 60px; border-radius: 30px; display: grid; grid-template-columns: minmax(0,1fr) 44px; align-items: end; gap: 10px; padding: 8px 8px 8px 18px; background: rgba(255,255,255,.6); border: 1px solid rgba(255,255,255,.75); box-shadow: inset 0 1px 1px rgba(255,255,255,.9), 0 16px 34px -26px rgba(76,70,160,.42); transition: transform .35s var(--spring), box-shadow .35s var(--spring); }
+    .composer:focus-within { transform: translateY(-2px); box-shadow: inset 0 1px 1px rgba(255,255,255,.95), 0 20px 46px -26px rgba(76,70,160,.55); }
+    .composer-input { width: 100%; min-height: 34px; max-height: 150px; resize: none; border: 0; outline: none; padding: 8px 0 0; color: var(--ink); background: transparent; line-height: 1.45; }
+    .composer-input::placeholder { color: rgba(107,107,128,.82); }
+    .composer-input:disabled { cursor: not-allowed; opacity: .62; }
+    .send-button { width: 44px; aspect-ratio: 1; border: 0; border-radius: 50%; cursor: pointer; color: #fff; background: var(--ink); font-size: 22px; line-height: 1; transition: opacity .25s, transform .35s var(--spring); }
+    .send-button:disabled { opacity: .32; cursor: not-allowed; }
+    .send-button:not(:disabled):hover { transform: translateY(-2px); }
+    .fine-print { margin: 0; color: rgba(107,107,128,.84); font-size: 11.5px; text-align: center; }
+    .error-panel { display: none; gap: 8px; padding: 14px; border-radius: 24px; background: rgba(255,255,255,.52); border: 1px solid rgba(255,255,255,.72); color: var(--muted); }
+    body.is-error .composer { display: none; }
+    body.is-error .error-panel { display: grid; }
+    .error-title { color: var(--ink); font-weight: 850; }
+    .error-raw { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font: 11px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .section { position: relative; width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 92px 0; scroll-margin-top: 96px; }
+    .section-kicker { margin: 0 0 8px; color: #8B5CF6; font-family: "Instrument Serif", Georgia, serif; font-size: 27px; font-style: italic; }
+    .section-title { margin: 0; font-size: clamp(32px, 4.2vw, 56px); line-height: 1.08; letter-spacing: -.05em; font-weight: 850; text-wrap: balance; }
+    .section-subtitle { margin: 14px 0 0; color: var(--muted); font-size: 18px; line-height: 1.65; font-weight: 600; }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding-top: 40px; padding-bottom: 26px; }
+    .stat-card { border-radius: 28px; padding: 24px; text-align: center; }
+    .stat-number { display: block; font-size: clamp(34px, 4vw, 56px); font-weight: 850; letter-spacing: -.05em; background: var(--brand-strong); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .stat-label { color: var(--muted); font-weight: 800; white-space: nowrap; }
+    .bento { display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; margin-top: 34px; }
+    .feature-card { min-height: 350px; border-radius: 32px; padding: 22px; display: grid; align-content: space-between; overflow: hidden; transition: transform .45s var(--spring); }
+    .feature-card:hover { transform: translateY(-6px); }
+    .feature-wide { grid-column: span 3; }
+    .feature-small { grid-column: span 2; }
+    .mock { min-height: 178px; position: relative; display: grid; place-items: center; }
+    .feature-copy { display: grid; gap: 8px; }
+    .feature-title { margin: 0; font-size: 22px; letter-spacing: -.035em; font-weight: 850; }
+    .feature-desc { margin: 0; color: var(--muted); line-height: 1.55; font-weight: 600; }
+    .file-name { width: max-content; max-width: 100%; overflow: hidden; text-overflow: ellipsis; padding: 8px 11px; border-radius: 999px; color: #5B4BC4; background: rgba(238,240,255,.74); font: 700 12px ui-monospace, SFMono-Regular, Menlo, monospace; white-space: nowrap; }
+    .slides-mock { width: 188px; height: 126px; position: relative; }
+    .slide { position: absolute; inset: 0; border-radius: 18px; background: rgba(255,255,255,.82); border: 1px solid rgba(255,255,255,.86); box-shadow: 0 18px 40px -24px rgba(76,70,160,.45); transition: transform .5s var(--spring); }
+    .slide:nth-child(1) { transform: rotate(-8deg) translate(-12px, 12px); }
+    .slide:nth-child(2) { transform: rotate(2deg) translate(5px, 6px); }
+    .slide:nth-child(3) { transform: rotate(9deg) translate(18px, -2px); background: linear-gradient(135deg, rgba(110,139,255,.92), rgba(255,138,200,.86)); }
+    .feature-card:hover .slide:nth-child(1) { transform: rotate(-15deg) translate(-38px, 18px); }
+    .feature-card:hover .slide:nth-child(2) { transform: rotate(0deg) translate(0, 2px); }
+    .feature-card:hover .slide:nth-child(3) { transform: rotate(15deg) translate(40px, -6px); }
+    .slide-line { position: absolute; left: 18px; right: 18px; height: 9px; border-radius: 9px; background: rgba(20,20,43,.1); }
+    .slide-line.one { top: 28px; width: 44%; } .slide-line.two { top: 50px; } .slide-line.three { top: 70px; width: 66%; }
+    .poster-mock { width: 122px; height: 176px; border-radius: 24px; padding: 18px; color: #fff; background: linear-gradient(160deg,#24115A,#8B5CF6 48%,#FF8AC8); box-shadow: 0 20px 44px -24px rgba(76,70,160,.7); transition: transform .5s var(--spring); }
+    .feature-card:hover .poster-mock { transform: rotate(-4deg) translateY(-8px); }
+    .poster-title { margin-top: 54px; font-size: 25px; line-height: .92; letter-spacing: -.06em; font-weight: 850; }
+    .doc-mock { width: 160px; height: 188px; border-radius: 22px; overflow: hidden; background: rgba(255,255,255,.86); box-shadow: 0 20px 44px -26px rgba(20,20,43,.32); transition: transform .5s var(--spring); }
+    .doc-cover { height: 54px; background: var(--brand); }
+    .doc-lines { padding: 18px; display: grid; gap: 10px; }
+    .doc-line { height: 8px; border-radius: 9px; background: rgba(20,20,43,.1); }
+    .feature-card:hover .doc-mock { transform: translateY(-8px) rotate(2deg); }
+    .browser-mock { width: 220px; border-radius: 22px; overflow: hidden; background: rgba(255,255,255,.76); border: 1px solid rgba(255,255,255,.8); box-shadow: 0 20px 44px -26px rgba(20,20,43,.32); transition: transform .5s var(--spring); }
+    .browser-top { height: 34px; display: flex; align-items: center; gap: 6px; padding: 0 13px; border-bottom: 1px solid var(--line); }
+    .browser-dot { width: 7px; aspect-ratio: 1; border-radius: 50%; background: rgba(20,20,43,.18); }
+    .browser-body { padding: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .browser-hero { grid-column: 1 / -1; height: 54px; border-radius: 16px; background: var(--brand); }
+    .browser-card { height: 42px; border-radius: 14px; background: rgba(110,139,255,.13); }
+    .feature-card:hover .browser-mock { transform: translateY(-8px) scale(1.02); }
+    .budget-mock { width: 216px; border-radius: 24px; padding: 18px; background: rgba(255,255,255,.76); border: 1px solid rgba(255,255,255,.8); box-shadow: 0 20px 44px -26px rgba(20,20,43,.32); transition: transform .5s var(--spring); }
+    .budget-price { font: 850 22px/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: -.06em; }
+    .bars { height: 94px; display: flex; align-items: end; gap: 8px; padding-top: 18px; }
+    .bar { flex: 1; border-radius: 999px 999px 8px 8px; background: var(--brand); transform-origin: bottom; transform: scaleY(.12); }
+    .bar:nth-child(1) { height: 50%; } .bar:nth-child(2) { height: 78%; } .bar:nth-child(3) { height: 36%; } .bar:nth-child(4) { height: 92%; }
+    .feature-card:hover .budget-mock, .budget-mock.is-visible { transform: translateY(-8px); }
+    .budget-mock.is-visible .bar { animation: grow .9s var(--spring) forwards; }
+    .how-grid { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 22px; margin-top: 34px; align-items: stretch; }
+    .orbit-card { border-radius: 36px; padding: 22px; overflow: hidden; display: grid; place-items: center; min-height: 440px; }
+    .orbit { --r: 150px; position: relative; width: calc(var(--r) * 2); aspect-ratio: 1; margin: 48px auto; }
+    .orbit-ring { position: absolute; inset: 0; border-radius: 50%; border: 1px dashed rgba(20,20,43,.16); animation: orbit-spin 40s linear infinite; }
+    .orbit .agent { position: absolute; left: 50%; top: 50%; transform: rotate(var(--a)) translateX(var(--r)) rotate(calc(-1 * var(--a))); }
+    .orbit .agent b { position: absolute; translate: -50% -50%; white-space: nowrap; padding: 8px 12px; border-radius: 999px; font: 600 12px ui-monospace, SFMono-Regular, Menlo, monospace; color: #5B4BC4; background: rgba(255,255,255,.8); border: 1px solid #fff; animation: orbit-spin 40s linear infinite reverse; }
+    .orbit .leader { position: absolute; left: 50%; top: 50%; translate: -50% -50%; width: 112px; aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center; font-weight: 800; background: rgba(255,255,255,.66); border: 1px solid rgba(255,255,255,.78); box-shadow: inset 0 1px 1px #fff, 0 24px 42px -28px rgba(76,70,160,.5); }
+    @keyframes orbit-spin { to { rotate: 360deg; } }
+    .steps { display: grid; gap: 12px; }
+    .step { display: grid; grid-template-columns: auto 1fr; gap: 14px; padding: 20px; border-radius: 28px; }
+    .step-num { width: 38px; aspect-ratio: 1; display: grid; place-items: center; border-radius: 50%; color: #fff; background: var(--ink); font-weight: 850; }
+    .step-title { margin: 0 0 6px; font-size: 18px; font-weight: 850; }
+    .step-desc { margin: 0; color: var(--muted); line-height: 1.6; font-weight: 600; }
+    .design-band { width: 100%; max-width: none; margin-top: 38px; padding: 92px max(16px, calc((100vw - 1120px) / 2)); color: #fff; background: linear-gradient(105deg,#5B3DF5,#FF4FA3 58%,#FF9F45); overflow: hidden; }
+    .design-band .section-kicker, .design-band .section-subtitle { color: rgba(255,255,255,.78); }
+    .themes { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-top: 34px; }
+    .theme-card { min-width: 0; border-radius: 26px; padding: 18px; background: rgba(255,255,255,.18); -webkit-backdrop-filter: blur(18px) saturate(150%); backdrop-filter: blur(18px) saturate(150%); border: 1px solid rgba(255,255,255,.32); box-shadow: inset 0 1px 1px rgba(255,255,255,.25); }
+    .theme-dots { display: flex; gap: 8px; margin-bottom: 20px; }
+    .theme-dot { width: 26px; aspect-ratio: 1; border-radius: 50%; border: 1px solid rgba(255,255,255,.45); }
+    .theme-name { font-size: 17px; font-weight: 850; }
+    .theme-use { margin-top: 6px; color: rgba(255,255,255,.74); font-size: 13px; line-height: 1.45; font-weight: 650; }
+    .prompt-marquee { width: min(100vw, 100%); overflow: hidden; display: grid; gap: 12px; margin-top: 34px; -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); }
+    .marquee-track { width: max-content; animation: marquee 32s linear infinite; }
+    .marquee-track.reverse { animation-direction: reverse; }
+    .marquee-chip { border: 1px solid rgba(255,255,255,.72); cursor: pointer; border-radius: 999px; padding: 14px 18px; color: rgba(20,20,43,.78); background: rgba(255,255,255,.58); font-weight: 800; white-space: nowrap; }
+    .cta-panel { position: relative; overflow: hidden; border-radius: 36px; padding: clamp(54px, 8vw, 110px) 22px; text-align: center; }
+    .cta-inner { position: relative; z-index: 1; display: grid; justify-items: center; gap: 16px; }
+    .cta-title { margin: 0; font-size: clamp(40px, 6vw, 88px); line-height: 1.04; letter-spacing: -.06em; font-weight: 850; text-wrap: balance; }
+    .footer { display: flex; justify-content: space-between; gap: 18px; width: min(1120px, calc(100% - 32px)); margin: 0 auto; padding: 34px 0 44px; color: rgba(107,107,128,.84); font-size: 13px; font-weight: 700; }
+    .float-alert { position: fixed; z-index: 25; right: 18px; bottom: 18px; display: none; align-items: center; gap: 8px; border: 0; cursor: pointer; border-radius: 999px; padding: 12px 15px; color: var(--ink); font-weight: 850; white-space: nowrap; }
+    body.show-float .float-alert { display: inline-flex; }
+    .reveal-hidden { opacity: 0; transform: translateY(28px); filter: blur(12px); }
+    .reveal-visible { opacity: 1; transform: translateY(0); filter: blur(0); transition: opacity .7s var(--spring), transform .7s var(--spring), filter .7s var(--spring); transition-delay: var(--delay, 0ms); }
+    .composer::before { content: ""; position: absolute; inset: -1px; padding: 1.5px; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .6s; background: conic-gradient(from var(--aurora), #a5b4fc, #f0abfc, #fda4af, #fcd34d, #86efac, #67e8f9, #a5b4fc); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; animation: aurora 6s linear infinite; }
+    body.is-working .composer::before { opacity: .8; }
+    @property --aurora { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
+    @keyframes aurora { to { --aurora: 360deg; } }
+    @keyframes blob-drift { to { transform: translate3d(9%, 8%, 0) scale(1.08); } }
+    @keyframes blink { 0%, 100% { opacity: .25; transform: scale(.75); } 45% { opacity: 1; transform: scale(1); } }
+    @keyframes grow { to { transform: scaleY(1); } }
+    @keyframes marquee { to { transform: translateX(-50%); } }
+    #webchat .webchat__typing-indicator { display: none !important; }
+    #webchat .webchat__stacked-layout:not(.webchat__stacked-layout--from-user) .webchat__stacked-layout__status { display: none; }
+    #webchat .webchat__stacked-layout__attachment-row { margin-top: 8px !important; }
+    #webchat .webchat__stacked-layout__attachment, #webchat .webchat__stacked-layout__attachment .webchat__bubble__content { background: none !important; border: 0 !important; overflow: visible !important; }
+    #webchat .webchat__stacked-layout__content:has(.webchat__fileContent) { overflow: visible !important; }
+    #webchat .webchat__fileContent { padding: 0 !important; }
+    #webchat .webchat__fileContent__buttonLink { display: flex !important; align-items: center; gap: 12px; height: 56px; padding: 0 18px 0 12px; border-radius: 18px; text-decoration: none; color: #14142B; background: rgba(255,255,255,.72); -webkit-backdrop-filter: blur(24px) saturate(160%); backdrop-filter: blur(24px) saturate(160%); border: 1px solid rgba(255,255,255,.8); box-shadow: 0 10px 24px -16px rgba(76,70,160,.3), inset 0 1px 1px #fff; }
+    #webchat .webchat__fileContent__buttonLink::before { content: "FILE"; flex: none; padding: 5px 8px; border-radius: 999px; background: linear-gradient(120deg, #EEF0FF, #FBEFFF); color: #5B4BC4; font: 600 10.5px/1 ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .04em; }
+    #webchat a[download$=".pptx" i]::before { content: "PPTX"; } #webchat a[download$=".docx" i]::before { content: "DOCX"; } #webchat a[download$=".xlsx" i]::before { content: "XLSX"; } #webchat a[download$=".html" i]::before { content: "HTML"; }
+    #webchat .webchat__fileContent__badge { flex: 1; min-width: 0; background: none !important; padding: 0 !important; }
+    #webchat .webchat__fileContent__fileName { font: 13px ui-monospace, SFMono-Regular, Menlo, monospace !important; color: #14142B !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #webchat .webchat__fileContent__downloadIcon { flex: none; box-sizing: content-box; width: 16px; height: 16px; padding: 0; fill: #6B6B80; color: #6B6B80; }
+    #webchat .webchat__render-markdown { word-break: keep-all; overflow-wrap: anywhere; }
+    #webchat .webchat__render-markdown table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; border-spacing: 0; margin: 12px 0; font-variant-numeric: tabular-nums; }
+    #webchat .webchat__render-markdown th, #webchat .webchat__render-markdown td { padding: 9px 18px 9px 0; border-bottom: 1px solid rgba(20,20,43,.08); white-space: nowrap; }
+    #webchat .webchat__render-markdown th { font-size: 12px; font-weight: 600; color: #6B6B80; }
+    @media (max-width: 900px) { .nav { grid-template-columns: minmax(0,1fr) auto; } .nav-links { display: none; } .hero { padding-top: 22px; } .stats, .themes { grid-template-columns: repeat(2, 1fr); } .bento, .how-grid { grid-template-columns: 1fr; } .feature-wide, .feature-small { grid-column: auto; } .footer { flex-direction: column; } }
+    @media (max-width: 600px) { .nav { top: 10px; width: calc(100% - 16px); padding: 8px; gap: 8px; } .brand { font-size: 13px; gap: 7px; } .brand-mark { width: 22px; } .pill-button { padding: 10px 12px; font-size: 13px; } .hero { margin: 76px 8px 0; border-radius: 28px; padding: 18px 10px 18px; } .hero-inner { gap: 10px; } .eyebrow { font-size: 11px; padding: 8px 10px; max-width: calc(100vw - 44px); } .hero-title { font-size: clamp(38px, 13vw, 52px); } .hero-subtitle { font-size: 15px; line-height: 1.45; } .chat-card { border-radius: 26px; padding: 9px; } .window-bar { gap: 8px; } .connection-text { display: none; } .chat-card > #webchat { height: 200px; } body.is-started .chat-card { height: calc(100svh - 96px); } .composer { min-height: 56px; grid-template-columns: minmax(0,1fr) 40px; padding-left: 15px; } .send-button { width: 40px; } .section { width: min(100% - 24px, 1120px); padding: 68px 0; } .stats { grid-template-columns: 1fr 1fr; } .stat-card { padding: 18px 10px; } .stat-label { font-size: 12px; } .feature-card { min-height: 320px; padding: 18px; } .orbit { --r: 100px; } .orbit .agent b { font-size: 10px; padding: 6px 9px; } .orbit .leader { width: 84px; } .orbit-card { min-height: 330px; } .themes { grid-template-columns: 1fr; } .design-band { padding: 68px 16px; } .float-alert { right: 10px; bottom: 10px; max-width: calc(100vw - 20px); overflow: hidden; text-overflow: ellipsis; } .mock { transform: scale(.92); } }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } .reveal-hidden { opacity: 1; transform: none; filter: none; } }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <nav class="nav glass" aria-label="주요 메뉴">
+      <a class="brand" href="#top" aria-label="AI Creative Agent Team 홈"><span class="brand-mark"></span><span class="brand-name">AI Creative Agent Team</span></a>
+      <div class="nav-links"><a class="nav-link" href="#features">기능</a><a class="nav-link" href="#how">작동 방식</a><a class="nav-link" href="#design">디자인</a></div>
+      <button class="pill-button nav-try" type="button">지금 써 보기</button>
+    </nav>
 
-<div id="webchat" style="height: 600px"></div>
+    <main id="top">
+      <section class="hero mesh" aria-label="AI Creative Agent Team 소개">
+        <div class="hero-inner">
+          <div class="eyebrow glass"><span class="status-dot" aria-hidden="true"></span><span class="eyebrow-copy">Copilot Studio 멀티 에이전트 <span class="serif">One idea, five deliverables.</span></span></div>
+          <h1 class="hero-title">한 줄의 아이디어,<br><span class="gradient-text">다섯 개의 결과물.</span></h1>
+          <p class="hero-subtitle">팀장 에이전트가 전문가 다섯에게 일을 나눠, 발표자료부터 예산 분석까지 한 번에 만들어 드려요.</p>
 
-<script>
-  const BROKER_URL = "https://dl-broker-juwon-4jt3z.azurewebsites.net/api/directlineToken";
-  const SEALED = "MWH5EbFehzqR3Nr1Yewj2IQ9W8nwk3a_r8yEtT-W-2QJBPIDQ0q7Bigfiqglysw8iubW89Pt0ey6v4-svq4ytLZ8c4MoDz1UGBRmuwOngA0rvTEu0db8bxGI5us0odOsXX6UcNyESeX-mRA45yQRHjafxcE6bvNrsXCwlM63xo3TrgcGBFS_VyX2jngQcqvUnZIZ5DcPsgEjan1i5nYVm77M1kPA9h2K6-qoF1hSNwDI3u1vPs3q3quXxaY3WKm71gMAKm9CpKeoMrfeFbMl78sZ7fLPPwMqWyLcUWPsiRlexktC6_hHnBzHPcX29YrBP0bi544Iv7-80c7VMWWHKtjSen8OcGj9qSPOhnqx6VXlSbZPTjbS0miStTg9t-AEbrgdnfDISQXCvhjiwmK0TR9gZw9SmLv2AMuTVkotuSfEQ1uwuMDCPzfUPkS0jDwaKNMuF4jIdwYh5kbg8BwliPA_6WHIb9Gym1SFeHMAuJzjbDOzAkFJvU3WTN0XL-50qwu2-vyS3cds59TLixiBjsYPQrEeDn9exzKPW3QOL1jjTu4n4X9bEoxRqPRUXdtm3d8hkorO5136EeGnqhT8V0r82ZuVhu5ixNT5_XDDbiQXI9MTe4BtiM28_BAhod23WIlu0uybXBS9iSY";
+          <section class="chat-card glass" aria-label="AI Creative Agent Team 대화창">
+            <div class="window-bar">
+              <div class="traffic" aria-hidden="true"><span class="traffic-dot"></span><span class="traffic-dot"></span><span class="traffic-dot"></span></div>
+              <div class="window-title"><span>AI Creative Agent Team</span><span class="status-dot" aria-hidden="true"></span><span class="connection-text">팀을 부르는 중…</span></div>
+              <button class="new-chat" type="button">새 대화</button>
+            </div>
+            <div id="webchat" role="main"></div>
+            <div class="chat-foot">
+              <div class="example-chips" aria-label="예시 요청">
+                <button class="chip example-chip" type="button">가을 학교 축제 기획해 줘</button>
+                <button class="chip example-chip" type="button">탄소중립 캠페인 홍보물 만들어 줘</button>
+                <button class="chip example-chip" type="button">교사 AI 연수 프로그램 제안해 줘</button>
+              </div>
+              <div class="working"><span class="working-left"><span class="spark-dots" aria-hidden="true"><span class="spark-dot"></span><span class="spark-dot"></span><span class="spark-dot"></span><span class="spark-dot"></span><span class="spark-dot"></span></span><span class="working-time">팀이 작업 중 · 0:00</span></span><span class="working-note"></span></div>
+              <div class="suggestions" aria-label="제안 버튼"></div>
+              <div class="composer" aria-label="메시지 입력">
+                <textarea class="composer-input" rows="1" placeholder="무엇을 만들어 볼까요?" disabled></textarea>
+                <button class="send-button" type="button" disabled aria-label="보내기">↑</button>
+              </div>
+              <div class="error-panel"><strong class="error-title">지금은 팀과 연결할 수 없어요</strong><pre class="error-raw"></pre><button class="pill-button ghost-button retry-button" type="button">다시 시도</button></div>
+              <p class="fine-print">AI는 실수할 수 있어요. 중요한 내용은 확인하세요.</p>
+            </div>
+          </section>
+        </div>
+      </section>
+      <div class="logo-strip">Microsoft Copilot Studio · Claude Opus 5.5 · PowerPoint · Word · Excel · HTML</div>
 
-  fetch(BROKER_URL, { method: "POST", body: JSON.stringify({ sealed: SEALED }) })
-    .then(r => r.json())
-    .then(({ token, error }) => {
-      if (!token) throw new Error(error);
-      const directLine = WebChat.createDirectLine({ token });
-      directLine.postActivity({ type: "event", name: "startConversation", from: { id: "user" } }).subscribe(); // 첫 인사말 요청
-      WebChat.renderWebChat({ directLine, locale: "ko-KR" }, document.getElementById("webchat"));
-    })
-    .catch(e => document.getElementById("webchat").textContent = "연결하지 못했습니다: " + e.message);
-</script>
+      <section class="section stats" aria-label="주요 숫자">
+        <div class="stat-card glass" data-reveal><span class="stat-number" data-count="1">0</span><span class="stat-label">번의 요청</span></div>
+        <div class="stat-card glass" data-reveal><span class="stat-number" data-count="6">0</span><span class="stat-label">명의 에이전트</span></div>
+        <div class="stat-card glass" data-reveal><span class="stat-number" data-count="7">0</span><span class="stat-label">개의 작업 매뉴얼</span></div>
+        <div class="stat-card glass" data-reveal><span class="stat-number" data-count="5">0</span><span class="stat-label">개의 파일</span></div>
+      </section>
+
+      <section id="features" class="section">
+        <p class="section-kicker" data-reveal>Five deliverables.</p>
+        <h2 class="section-title" data-reveal>한 번의 요청으로 받는 다섯 가지</h2>
+        <div class="bento">
+          <article class="feature-card feature-wide glass" data-reveal>
+            <div class="mock"><div class="slides-mock"><div class="slide"><span class="slide-line one"></span><span class="slide-line two"></span></div><div class="slide"><span class="slide-line one"></span><span class="slide-line two"></span><span class="slide-line three"></span></div><div class="slide"><span class="slide-line one"></span><span class="slide-line two"></span></div></div></div>
+            <div class="feature-copy"><h3 class="feature-title">말할 거리가 정리된 10장</h3><p class="feature-desc">10장 내외 슬라이드와 발표자 노트까지</p><span class="file-name">presentation.pptx</span></div>
+          </article>
+          <article class="feature-card feature-wide glass" data-reveal>
+            <div class="mock"><div class="poster-mock"><div class="serif">Poster</div><div class="poster-title">걸어 두고 싶은 한 장</div></div></div>
+            <div class="feature-copy"><h3 class="feature-title">걸어 두고 싶은 한 장</h3><p class="feature-desc">브라우저에서 바로 여는 유리 질감 포스터, 인쇄·PDF 저장도</p><span class="file-name">poster.html</span></div>
+          </article>
+          <article class="feature-card feature-small glass" data-reveal>
+            <div class="mock"><div class="doc-mock"><div class="doc-cover"></div><div class="doc-lines"><span class="doc-line"></span><span class="doc-line"></span><span class="doc-line"></span><span class="doc-line"></span></div></div></div>
+            <div class="feature-copy"><h3 class="feature-title">바로 보낼 수 있는 제안서</h3><p class="feature-desc">테마 색 표지와 읽기 좋은 흰 본문</p><span class="file-name">proposal.docx</span></div>
+          </article>
+          <article class="feature-card feature-small glass" data-reveal>
+            <div class="mock"><div class="browser-mock"><div class="browser-top"><span class="browser-dot"></span><span class="browser-dot"></span><span class="browser-dot"></span></div><div class="browser-body"><div class="browser-hero"></div><div class="browser-card"></div><div class="browser-card"></div></div></div></div>
+            <div class="feature-copy"><h3 class="feature-title">신청까지 받는 랜딩</h3><p class="feature-desc">유리 메뉴 바와 카드로 만든 소개·신청 페이지</p><span class="file-name">webpage.html</span></div>
+          </article>
+          <article class="feature-card feature-small glass" data-reveal>
+            <div class="mock"><div class="budget-mock"><div class="budget-price">₩12,400,000</div><div class="bars"><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span></div></div></div>
+            <div class="feature-copy"><h3 class="feature-title">숫자가 맞는 예산</h3><p class="feature-desc">숫자 카드와 차트, 합계는 수식으로</p><span class="file-name">budget_analysis.xlsx</span></div>
+          </article>
+        </div>
+      </section>
+
+      <section id="how" class="section">
+        <p class="section-kicker" data-reveal>How the team works.</p>
+        <h2 class="section-title" data-reveal>팀장 하나, 전문가 다섯, 매뉴얼 일곱.</h2>
+        <div class="how-grid">
+          <div class="orbit-card glass" data-reveal><div class="orbit"><div class="orbit-ring"><span class="agent" style="--a:0deg"><b>ppt-agent</b></span><span class="agent" style="--a:72deg"><b>poster-agent</b></span><span class="agent" style="--a:144deg"><b>proposal-agent</b></span><span class="agent" style="--a:216deg"><b>webpage-agent</b></span><span class="agent" style="--a:288deg"><b>budget-agent</b></span></div><div class="leader">팀장</div></div></div>
+          <div class="steps">
+            <article class="step glass" data-reveal><span class="step-num">①</span><div><h3 class="step-title">브리프</h3><p class="step-desc">요청을 한 장짜리 기획서로 정리하고 컬러 테마를 정해요.</p></div></article>
+            <article class="step glass" data-reveal><span class="step-num">②</span><div><h3 class="step-title">예산 먼저</h3><p class="step-desc">budget-agent가 예산 기준표로 모든 금액의 기준을 잡아요.</p></div></article>
+            <article class="step glass" data-reveal><span class="step-num">③</span><div><h3 class="step-title">원고</h3><p class="step-desc">전문가들이 같은 브리프로 각자 원고를 써요.</p></div></article>
+            <article class="step glass" data-reveal><span class="step-num">④</span><div><h3 class="step-title">파일 5개</h3><p class="step-desc">디자인 규칙에 맞춰 파일을 만들어 한 번에 첨부해요.</p></div></article>
+          </div>
+        </div>
+      </section>
+
+      <section id="design" class="section design-band">
+        <p class="section-kicker" data-reveal>One design language.</p>
+        <h2 class="section-title" data-reveal>다섯 파일, 하나의 리퀴드 글래스.</h2>
+        <p class="section-subtitle" data-reveal>재질과 레이아웃은 늘 같고, 색만 주제에 맞게 바뀝니다.</p>
+        <div class="themes">
+          <div class="theme-card" data-reveal><div class="theme-dots"><span class="theme-dot" style="background:#A8D8FF"></span><span class="theme-dot" style="background:#007AFF"></span></div><div class="theme-name">스카이</div><div class="theme-use">교육·일반 행사</div></div>
+          <div class="theme-card" data-reveal><div class="theme-dots"><span class="theme-dot" style="background:#1EC8FF"></span><span class="theme-dot" style="background:#FF2E93"></span></div><div class="theme-name">팝</div><div class="theme-use">IT 캠페인·축제</div></div>
+          <div class="theme-card" data-reveal><div class="theme-dots"><span class="theme-dot" style="background:#0B1628"></span><span class="theme-dot" style="background:#6EA8FF"></span></div><div class="theme-name">네이비</div><div class="theme-use">공공 보고서·정책</div></div>
+          <div class="theme-card" data-reveal><div class="theme-dots"><span class="theme-dot" style="background:#A8E3C4"></span><span class="theme-dot" style="background:#12A150"></span></div><div class="theme-name">그린</div><div class="theme-use">환경·ESG</div></div>
+          <div class="theme-card" data-reveal><div class="theme-dots"><span class="theme-dot" style="background:#FFC2B3"></span><span class="theme-dot" style="background:#FF6B4A"></span></div><div class="theme-name">코럴</div><div class="theme-use">가족·복지</div></div>
+        </div>
+      </section>
+
+      <section class="section">
+        <p class="section-kicker" data-reveal>Ready prompts.</p>
+        <h2 class="section-title" data-reveal>이런 요청에 강해요</h2>
+        <div class="prompt-marquee" data-reveal>
+          <div class="marquee-track"></div>
+          <div class="marquee-track reverse"></div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="cta-panel mesh" data-reveal>
+          <div class="cta-inner"><p class="section-kicker">Your turn.</p><h2 class="cta-title">지금, 아이디어 한 줄을<br>적어 보세요.</h2><button class="pill-button cta-start" type="button">대화 시작하기 ↑</button></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer"><span>AI Creative Agent Team</span><span>Copilot Studio로 만든 멀티 에이전트</span><span>© 2026</span></footer>
+    <button class="float-alert glass" type="button">팀이 작업 중 · 0:00</button>
+  </div>
+
+  <script>
+    // ① 등장 효과·숫자·버튼 연결
+    const body = document.body;
+    const chatCard = document.querySelector(".chat-card");
+    const input = document.querySelector(".composer-input");
+    const sendButton = document.querySelector(".send-button");
+    const connectionText = document.querySelector(".connection-text");
+    const suggestions = document.querySelector(".suggestions");
+    const workingTime = document.querySelector(".working-time");
+    const workingNote = document.querySelector(".working-note");
+    const floatAlert = document.querySelector(".float-alert");
+    const errorRaw = document.querySelector(".error-raw");
+    const promptItems = ["가을 학교 축제", "탄소중립 캠페인", "교사 AI 연수", "신제품 런칭 행사", "진로 체험 주간", "지역 축제 홍보", "고객 제안 워크숍", "학부모 설명회", "해커톤", "동아리 박람회"];
+    let directLineStore;
+    let workingStartedAt = 0;
+    let workingTimer;
+    let chatVisible = true;
+    let hasResult = false;
+
+    function scrollToChat() {
+      window.scrollTo({ top: chatCard.getBoundingClientRect().top + window.scrollY - 88, behavior: "smooth" });
+      window.setTimeout(() => input.focus({ preventScroll: true }), 420);
+    }
+
+    function resizeInput() {
+      input.style.height = "auto";
+      input.style.height = Math.min(input.scrollHeight, 150) + "px";
+      sendButton.disabled = !body.classList.contains("is-connected") || !input.value.trim();
+    }
+
+    function setPrompt(text) {
+      input.value = text + " 기획해 줘";
+      resizeInput();
+      scrollToChat();
+    }
+
+    function makeMarquee() {
+      document.querySelectorAll(".marquee-track").forEach((track) => {
+        [...promptItems, ...promptItems].forEach((item) => {
+          const chip = document.createElement("button");
+          chip.type = "button";
+          chip.className = "marquee-chip";
+          chip.textContent = item;
+          chip.addEventListener("click", () => setPrompt(item));
+          track.appendChild(chip);
+        });
+      });
+    }
+
+    function startCounters(entries, observer) {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        const number = entry.target.querySelector(".stat-number");
+        if (number && !number.dataset.done) {
+          number.dataset.done = "true";
+          const target = Number(number.dataset.count || 0);
+          const started = performance.now();
+          const tick = (now) => {
+            const progress = Math.min(1, (now - started) / 950);
+            number.textContent = Math.round(target * progress);
+            if (progress < 1) requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        }
+        observer.unobserve(entry.target);
+      });
+    }
+
+    function initReveal() {
+      const revealItems = [...document.querySelectorAll("[data-reveal]")];
+      revealItems.forEach((item, index) => {
+        item.classList.add("reveal-hidden");
+        item.style.setProperty("--delay", (index % 5) * 80 + "ms");
+      });
+      const revealObserver = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.remove("reveal-hidden");
+          entry.target.classList.add("reveal-visible");
+          if (entry.target.classList.contains("budget-mock")) entry.target.classList.add("is-visible");
+          revealObserver.unobserve(entry.target);
+        });
+      }, { threshold: .16 });
+      revealItems.forEach((item) => revealObserver.observe(item));
+      const countObserver = new IntersectionObserver(startCounters, { threshold: .35 });
+      document.querySelectorAll(".stat-card").forEach((item) => countObserver.observe(item));
+      const budgetObserver = new IntersectionObserver((entries) => entries.forEach((entry) => entry.isIntersecting && entry.target.classList.add("is-visible")), { threshold: .35 });
+      document.querySelectorAll(".budget-mock").forEach((item) => budgetObserver.observe(item));
+    }
+
+    document.querySelectorAll(".nav-try, .cta-start, .float-alert").forEach((button) => button.addEventListener("click", scrollToChat));
+    document.querySelector(".new-chat").addEventListener("click", () => location.reload());
+    document.querySelector(".retry-button").addEventListener("click", () => location.reload());
+    makeMarquee();
+    initReveal();
+
+    // 블롭 시차 이동
+    const parallaxPanels = document.querySelectorAll(".hero, .cta-panel");
+    window.addEventListener("scroll", () => {
+      parallaxPanels.forEach((panel) => {
+        const rect = panel.getBoundingClientRect();
+        panel.style.setProperty("--py", Math.max(-80, Math.min(80, -rect.top * .08)) + "px");
+      });
+    }, { passive: true });
+
+    new IntersectionObserver((entries) => {
+      chatVisible = entries[0].isIntersecting;
+      updateFloat();
+    }, { threshold: .2 }).observe(chatCard);
+
+    // ② 대화창 동작
+    function updateWorkingTime() {
+      if (!workingStartedAt) return;
+      const seconds = Math.floor((Date.now() - workingStartedAt) / 1000);
+      const min = Math.floor(seconds / 60);
+      const sec = String(seconds % 60).padStart(2, "0");
+      const label = `팀이 작업 중 · ${min}:${sec}`;
+      workingTime.textContent = label;
+      floatAlert.textContent = label;
+      workingNote.textContent = seconds >= 20 ? "파일 5개를 만드느라 몇 분 걸릴 수 있어요" : "";
+    }
+
+    function startWorking() {
+      hasResult = false;
+      body.classList.add("is-working");
+      workingStartedAt = Date.now();
+      updateWorkingTime();
+      clearInterval(workingTimer);
+      workingTimer = setInterval(updateWorkingTime, 1000);
+      updateFloat();
+    }
+
+    function stopWorking() {
+      body.classList.remove("is-working");
+      clearInterval(workingTimer);
+      workingStartedAt = 0;
+      hasResult = true;
+      floatAlert.textContent = "결과가 도착했어요 ↑";
+      updateFloat();
+    }
+
+    function updateFloat() {
+      body.classList.toggle("show-float", !chatVisible && (body.classList.contains("is-working") || hasResult));
+    }
+
+    function sendText(text) {
+      const clean = text.trim();
+      if (!clean || !directLineStore || !body.classList.contains("is-connected")) return;
+      body.classList.add("is-started");
+      startWorking();
+      suggestions.replaceChildren();
+      directLineStore.dispatch({ type: "WEB_CHAT/SEND_MESSAGE", payload: { text: clean } });
+      input.value = "";
+      resizeInput();
+      scrollToChat();
+    }
+
+    document.querySelectorAll(".example-chip").forEach((chip) => chip.addEventListener("click", () => sendText(chip.textContent)));
+    sendButton.addEventListener("click", () => sendText(input.value));
+    input.addEventListener("input", resizeInput);
+    input.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" || event.shiftKey || event.isComposing || event.keyCode === 229) return;
+      event.preventDefault();
+      sendText(input.value);
+    });
+
+    function renderSuggestedActions(actions) {
+      suggestions.replaceChildren();
+      (actions || []).forEach((action) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "chip";
+        button.textContent = action.title || action.value || "제안";
+        button.addEventListener("click", () => {
+          if (action.type === "openUrl" && action.value) {
+            window.open(action.value, "_blank", "noopener,noreferrer");
+          } else {
+            sendText(String(action.value || action.title || ""));
+          }
+        });
+        suggestions.appendChild(button);
+      });
+    }
+
+    function showError(error) {
+      body.classList.add("is-error");
+      connectionText.textContent = "연결 실패";
+      errorRaw.textContent = error && error.message ? error.message : String(error || "알 수 없는 오류");
+    }
+
+    // ③ 원래 연결 코드
+    const BROKER_URL = "https://dl-broker-juwon-4jt3z.azurewebsites.net/api/directlineToken";
+    const SEALED = "MWH5EbFehzqR3Nr1Yewj2IQ9W8nwk3a_r8yEtT-W-2QJBPIDQ0q7Bigfiqglysw8iubW89Pt0ey6v4-svq4ytLZ8c4MoDz1UGBRmuwOngA0rvTEu0db8bxGI5us0odOsXX6UcNyESeX-mRA45yQRHjafxcE6bvNrsXCwlM63xo3TrgcGBFS_VyX2jngQcqvUnZIZ5DcPsgEjan1i5nYVm77M1kPA9h2K6-qoF1hSNwDI3u1vPs3q3quXxaY3WKm71gMAKm9CpKeoMrfeFbMl78sZ7fLPPwMqWyLcUWPsiRlexktC6_hHnBzHPcX29YrBP0bi544Iv7-80c7VMWWHKtjSen8OcGj9qSPOhnqx6VXlSbZPTjbS0miStTg9t-AEbrgdnfDISQXCvhjiwmK0TR9gZw9SmLv2AMuTVkotuSfEQ1uwuMDCPzfUPkS0jDwaKNMuF4jIdwYh5kbg8BwliPA_6WHIb9Gym1SFeHMAuJzjbDOzAkFJvU3WTN0XL-50qwu2-vyS3cds59TLixiBjsYPQrEeDn9exzKPW3QOL1jjTu4n4X9bEoxRqPRUXdtm3d8hkorO5136EeGnqhT8V0r82ZuVhu5ixNT5_XDDbiQXI9MTe4BtiM28_BAhod23WIlu0uybXBS9iSY";
+
+    fetch(BROKER_URL, { method: "POST", body: JSON.stringify({ sealed: SEALED }) })
+      .then(r => r.json())
+      .then(({ token, error }) => {
+        if (!token) throw new Error(error);
+        directLineStore = WebChat.createStore({}, () => next => action => {
+          if (action.type === "DIRECT_LINE/CONNECT_FULFILLED") {
+            body.classList.add("is-connected");
+            connectionText.textContent = "연결됨";
+            input.disabled = false;
+            resizeInput();
+          }
+          if (action.type === "DIRECT_LINE/INCOMING_ACTIVITY") {
+            const activity = action.payload && action.payload.activity;
+            const isAgent = activity && activity.from && activity.from.role !== "user";
+            if (isAgent && activity.suggestedActions) renderSuggestedActions(activity.suggestedActions.actions);
+            if (isAgent && activity.type === "message") stopWorking();
+          }
+          return next(action);
+        });
+        const directLine = WebChat.createDirectLine({ token });
+        directLine.postActivity({ type: "event", name: "startConversation", from: { id: "user" } }).subscribe(); // 첫 인사말 요청
+        WebChat.renderWebChat({ directLine, store: directLineStore, locale: "ko-KR", styleOptions: { hideSendBox: true, rootHeight: "100%", backgroundColor: "transparent", primaryFont: "'Pretendard Variable', -apple-system, sans-serif", bubbleBackground: "transparent", bubbleBorderWidth: 0, bubbleMaxWidth: 720, bubbleMinWidth: 0, bubbleFromUserBackground: "linear-gradient(135deg, #EEF0FF, #FBEFFF)", bubbleFromUserBorderWidth: 0, bubbleFromUserBorderRadius: 20 } }, document.getElementById("webchat"));
+      })
+      .catch(e => showError(e));
+  </script>
+</body>
+</html>
